@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pronóstico del ITAEE de Jalisco</title>
+<meta name="description" content="Pronóstico a 4 trimestres del ITAEE de Jalisco con cinco modelos y tres combinaciones.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%276%27 fill=%27%2314161A%27/%3E%3Cpath d=%27M6 19 L11 13 L15 16 L22 8%27 fill=%27none%27 stroke=%27%238FA6FF%27 stroke-width=%272.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="6" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M6 19 L11 13 L15 16 L22 8" fill="none" stroke="#8FA6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>
+        <div class="brand__name">ITAEE Jalisco · Pronóstico</div>
+        <div class="brand__sub">PAP ITESO · Ingeniería y Ciencia de Datos</div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Secciones">
+      <a href="#pronostico">Pronóstico</a>
+      <a href="#tabla">Valores</a>
+      <a href="#validacion">Validación</a>
+      <a href="#pesos">Pesos</a>
+      <a href="#metodologia">Metodología</a>
+    </nav>
+    <div class="status"><span class="status__dot" id="status-dot"></span><span id="status-text">Cargando…</span></div>
+  </div>
+</header>
+
+<div id="banner-ejemplo" class="banner" hidden>
+  <div class="wrap">Datos de ejemplo copiados del notebook. Se reemplazan al correr el notebook completo y hacer push (ver README).</div>
+</div>
+
+<main class="wrap main">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero__text">
+      <span class="eyebrow">Indicador Trimestral de la Actividad Económica Estatal</span>
+      <h1 id="titulo">Pronóstico del ITAEE de Jalisco</h1>
+      <p class="lead">Cinco modelos (suavización exponencial, regresión y ARIMA con EMEC y EMIM como exógenas) y tres formas de combinarlos. Índice de volumen físico, 2018 = 100.</p>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <!-- GRÁFICA -->
+  <section id="pronostico" class="section">
+    <div class="section__head">
+      <div>
+        <h2>ITAEE y pronósticos</h2>
+        <p class="muted">Activa o quita modelos. Elige un trimestre para ver sus valores exactos.</p>
+      </div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Periodo">
+          <button type="button" data-rango="5a" aria-pressed="true">5 años</button>
+          <button type="button" data-rango="todo" aria-pressed="false">Toda la serie</button>
+        </div>
+        <button type="button" class="toggle" id="btn-banda" aria-pressed="true">Banda 95%</button>
+      </div>
+    </div>
+
+    <div class="chips" id="chips" role="group" aria-label="Modelos visibles"></div>
+
+    <div class="split">
+      <div class="card card--chart">
+        <div id="chart" class="chart"></div>
+        <div class="legend">
+          <span><svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="#14161A" stroke-width="2.5"/></svg>ITAEE observado</span>
+          <span><svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="#5A5F69" stroke-width="1.5" stroke-dasharray="4 3"/></svg>Modelo individual</span>
+          <span><svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="#5A5F69" stroke-width="3"/></svg>Combinación</span>
+          <span><i class="legend__band"></i>Banda 95% (comb. por error, ±1.96·RMSE)</span>
+        </div>
+      </div>
+
+      <aside class="card panel" aria-label="Valores del trimestre seleccionado">
+        <div class="qgrid" id="qbtns" role="group" aria-label="Trimestre"></div>
+        <div class="panel__main">
+          <span class="muted small" id="sel-label"></span>
+          <span class="num panel__big" id="sel-main"></span>
+          <span class="num small" id="sel-sub"></span>
+        </div>
+        <div class="panel__rows" id="sel-rows" aria-live="polite"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- TABLA -->
+  <section id="tabla" class="section">
+    <div class="section__head">
+      <div>
+        <h2>Valores pronosticados por modelo</h2>
+        <p class="muted">Variación anual contra el mismo trimestre del año anterior.</p>
+      </div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Unidad">
+          <button type="button" data-modo="nivel" aria-pressed="true">Nivel (índice)</button>
+          <button type="button" data-modo="aa" aria-pressed="false">Variación anual</button>
+        </div>
+        <button type="button" class="btn-primary" id="btn-csv">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2 V10 M4.5 6.5 L8 10 L11.5 6.5 M3 13 H13" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Descargar CSV
+        </button>
+      </div>
+    </div>
+    <div class="card scroll"><table class="num tbl" id="tbl-pron"></table></div>
+  </section>
+
+  <!-- VALIDACIÓN -->
+  <section id="validacion" class="section">
+    <div class="section__head">
+      <div class="narrow">
+        <h2>¿Qué modelo pronostica mejor?</h2>
+        <p class="muted" id="cv-desc">Validación cruzada con ventana expansiva. Error = real − pronóstico. Theil U menor a 1 = mejor que repetir el último valor.</p>
+      </div>
+      <div class="seg" role="group" aria-label="Horizonte" id="seg-h"></div>
+    </div>
+    <div class="split">
+      <div class="card scroll grow">
+        <table class="num tbl tbl--cv" id="tbl-cv"></table>
+        <div class="legend legend--foot">
+          <span><i class="legend__best"></i>Menor RMSE</span>
+          <span><b class="warn">1.69</b>Theil U &gt; 1: peor que el pronóstico ingenuo</span>
+        </div>
+      </div>
+      <div class="card side">
+        <h3>RMSE por horizonte</h3>
+        <p class="muted small">Puntos de índice; menor es mejor. Usa los mismos modelos activos de arriba.</p>
+        <div id="chart-rmse"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PESOS -->
+  <section id="pesos" class="section">
+    <div class="narrow">
+      <h2>Cuánto pesa cada modelo en las combinaciones</h2>
+      <p class="muted">Por error: inverso del MSE de validación, calculado por horizonte. Por BIC: exp((BIC* − BIC)/2), por eso tiende a concentrar el peso en un solo modelo.</p>
+    </div>
+    <div class="card scroll"><table class="num tbl tbl--w" id="tbl-pesos"></table></div>
+  </section>
+
+  <!-- CONCLUSIONES (texto fijo: actualízalo si cambian los resultados) -->
+  <section class="section">
+    <h2>Lo que dicen los resultados</h2>
+    <div class="findings">
+      <article>
+        <span class="findings__n">01</span>
+        <h3>ETS es el mejor modelo individual</h3>
+        <p>Ninguna combinación lo supera en RMSE a 1 ni a 4 trimestres. Combinar reduce el riesgo de elegir mal, pero aquí no baja el error.</p>
+      </article>
+      <article>
+        <span class="findings__n">02</span>
+        <h3>La regresión es la más débil</h3>
+        <p>Subestima de forma sistemática (ME positivo) y sus residuos están autocorrelacionados. Lo que más pesa en ella es EMEC menudeo.</p>
+      </article>
+      <article>
+        <span class="findings__n">03</span>
+        <h3>El BIC elige casi un solo modelo</h3>
+        <p>ARIMAX con promedio se lleva casi todo el peso, así que esa combinación prácticamente es ese modelo.</p>
+      </article>
+      <article>
+        <span class="findings__n">04</span>
+        <h3>Pocos datos, diferencias chicas</h3>
+        <p>Las exógenas empiezan en 2018 y hay entre 11 y 14 orígenes por horizonte. Diferencias pequeñas de RMSE no son concluyentes.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- METODOLOGÍA -->
+  <section id="metodologia" class="card method">
+    <div class="method__col method__col--wide">
+      <h2>Metodología</h2>
+      <p>Todos los modelos trabajan sobre log(ITAEE) y se regresan a nivel. La regresión y el ARIMA usan EMEC mayoreo, EMEC menudeo y EMIM (promedio o último mes del trimestre) y una dummy para 2020T2. Las exógenas futuras se pronostican con suavización exponencial.</p>
+    </div>
+    <div class="method__col">
+      <h3>Modelos</h3>
+      <span>ETS · tendencia amortiguada, estacional aditiva</span>
+      <span>Regresión lineal · promedio / último mes</span>
+      <span>ARIMAX estacional · orden elegido por BIC</span>
+    </div>
+    <div class="method__col">
+      <h3>Datos y código</h3>
+      <span id="rango-datos">INEGI: ITAEE, EMEC, EMIM</span>
+      <a id="lnk-repo" href="#">Repositorio en GitHub</a>
+      <a id="lnk-nb" href="#">Notebook de estimación</a>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__in">
+    <span id="footer-gen">Publicado con GitHub Actions</span>
+    <span>Proyecto PAP · ITESO</span>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
