@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pronóstico del ITAEE de Jalisco</title>
-<meta name="description" content="Pronóstico a 4 trimestres del ITAEE de Jalisco con cinco modelos y tres combinaciones.">
+<meta name="description" content="Pronóstico a 4 trimestres del ITAEE de Jalisco con cinco modelos y seis combinaciones.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%276%27 fill=%27%2314161A%27/%3E%3Cpath d=%27M6 19 L11 13 L15 16 L22 8%27 fill=%27none%27 stroke=%27%238FA6FF%27 stroke-width=%272.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,9 +24,11 @@
     </div>
     <nav class="nav" aria-label="Secciones">
       <a href="#pronostico">Pronóstico</a>
-      <a href="#tabla">Valores</a>
+<a href="#tabla">Valores</a>
+<a href="#intervalos">Intervalos</a>
       <a href="#validacion">Validación</a>
-      <a href="#pesos">Pesos</a>
+<a href="#pesos">Pesos</a>
+<a href="#exogenas">Exógenas</a>
       <a href="#metodologia">Metodología</a>
     </nav>
     <div class="status"><span class="status__dot" id="status-dot"></span><span id="status-text">Cargando…</span></div>
@@ -44,13 +46,24 @@
     <div class="hero__text">
       <span class="eyebrow">Indicador Trimestral de la Actividad Económica Estatal</span>
       <h1 id="titulo">Pronóstico del ITAEE de Jalisco</h1>
-      <p class="lead">Cinco modelos (suavización exponencial, regresión y ARIMA con EMEC y EMIM como exógenas) y tres formas de combinarlos. Índice de volumen físico, 2018 = 100.</p>
+      <p class="lead">Cinco modelos (suavización exponencial, regresión y ARIMA con EMEC y EMIM como exógenas) y seis formas de combinarlos. Índice de volumen físico, 2018 = 100.</p>
     </div>
     <div class="kpis" id="kpis"></div>
   </section>
 
-  <!-- GRÁFICA -->
-  <section id="pronostico" class="section">
+<!-- ESCENARIO -->
+<section class="section scenario" aria-label="Escenario de las variables exógenas">
+<div class="card scenario__in">
+<div>
+<h3>Variables exógenas (EMEC y EMIM)</h3>
+<p class="muted small" id="esc-desc"></p>
+</div>
+<div class="seg" role="group" aria-label="Escenario de exógenas" id="seg-esc"></div>
+</div>
+</section>
+
+<!-- GRÁFICA -->
+<section id="pronostico" class="section">
     <div class="section__head">
       <div>
         <h2>ITAEE y pronósticos</h2>
@@ -61,7 +74,9 @@
           <button type="button" data-rango="5a" aria-pressed="true">5 años</button>
           <button type="button" data-rango="todo" aria-pressed="false">Toda la serie</button>
         </div>
-        <button type="button" class="toggle" id="btn-banda" aria-pressed="true">Banda 95%</button>
+<div class="seg" role="group" aria-label="Tipo de intervalo" id="seg-int"></div>
+<label class="select"><span class="muted small">Banda de</span><select id="sel-banda" aria-label="Modelo de la banda"></select></label>
+<button type="button" class="toggle" id="btn-banda" aria-pressed="true">Banda 95%</button>
       </div>
     </div>
 
@@ -74,7 +89,7 @@
           <span><svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="#14161A" stroke-width="2.5"/></svg>ITAEE observado</span>
           <span><svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="#5A5F69" stroke-width="1.5" stroke-dasharray="4 3"/></svg>Modelo individual</span>
           <span><svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="#5A5F69" stroke-width="3"/></svg>Combinación</span>
-          <span><i class="legend__band"></i>Banda 95% (comb. por error, ±1.96·RMSE)</span>
+<span><i class="legend__band"></i><span id="leg-banda">Banda 95%</span></span>
         </div>
       </div>
 
@@ -108,8 +123,24 @@
         </button>
       </div>
     </div>
-    <div class="card scroll"><table class="num tbl" id="tbl-pron"></table></div>
-  </section>
+<div class="card scroll"><table class="num tbl" id="tbl-pron"></table></div>
+</section>
+
+<!-- INTERVALOS -->
+<section id="intervalos" class="section">
+<div class="section__head">
+<div class="narrow">
+<h2>Intervalos de predicción al 95%</h2>
+<p class="muted" id="int-desc"></p>
+</div>
+</div>
+<div class="card scroll"><table class="num tbl" id="tbl-int"></table></div>
+<div class="card scroll" style="margin-top:14px">
+<h3>¿Cubren lo observado? (validación cruzada)</h3>
+<p class="muted small">Proporción de pronósticos cuyo valor observado cayó dentro del intervalo propio del modelo. Lo esperado es cerca de 95%; con 11 a 14 casos por horizonte, cada fallo mueve la cifra unos 8 puntos.</p>
+<table class="num tbl" id="tbl-cob"></table>
+</div>
+</section>
 
   <!-- VALIDACIÓN -->
   <section id="validacion" class="section">
@@ -140,43 +171,54 @@
   <section id="pesos" class="section">
     <div class="narrow">
       <h2>Cuánto pesa cada modelo en las combinaciones</h2>
-      <p class="muted">Por error: inverso del MSE de validación, calculado por horizonte. Por BIC: exp((BIC* − BIC)/2), por eso tiende a concentrar el peso en un solo modelo.</p>
-    </div>
-    <div class="card scroll"><table class="num tbl tbl--w" id="tbl-pesos"></table></div>
+<p class="muted">Seis esquemas. Con el error de validación (por horizonte): 1/RMSE y 1/MSE. Con criterios de información: a = exp((IC* − IC)/2), w = a / Σa, para BIC, AIC y AICc; tienden a concentrar el peso en un solo modelo.</p>
+<div class="seg" role="group" aria-label="Horizonte de los pesos" id="seg-hw" style="margin-top:12px"></div>
+</div>
+<div class="card scroll"><table class="num tbl tbl--w" id="tbl-pesos"></table></div>
+<p class="muted small" id="ic-nota" style="margin-top:10px"></p>
   </section>
 
-  <!-- CONCLUSIONES (texto fijo: actualízalo si cambian los resultados) -->
+<!-- EXÓGENAS USADAS -->
+<section id="exogenas" class="section">
+<div class="narrow">
+<h2>Qué valores de EMEC y EMIM entran al pronóstico</h2>
+<p class="muted">Promedio del trimestre. “Observado” es el dato ya publicado por INEGI; el resto es el pronóstico de suavización exponencial. La EMIM de 2026T3 todavía no tiene los tres meses, por eso se completa con el pronóstico.</p>
+</div>
+<div class="card scroll"><table class="num tbl" id="tbl-exo"></table></div>
+</section>
+
+<!-- CONCLUSIONES (texto fijo: actualízalo si cambian los resultados) -->
   <section class="section">
     <h2>Lo que dicen los resultados</h2>
     <div class="findings">
-      <article>
-        <span class="findings__n">01</span>
-        <h3>ETS es el mejor modelo individual</h3>
-        <p>Ninguna combinación lo supera en RMSE a 1 ni a 4 trimestres. Combinar reduce el riesgo de elegir mal, pero aquí no baja el error.</p>
-      </article>
-      <article>
-        <span class="findings__n">02</span>
-        <h3>La regresión es la más débil</h3>
-        <p>Subestima de forma sistemática (ME positivo) y sus residuos están autocorrelacionados. Lo que más pesa en ella es EMEC menudeo.</p>
-      </article>
-      <article>
-        <span class="findings__n">03</span>
-        <h3>El BIC elige casi un solo modelo</h3>
-        <p>ARIMAX con promedio se lleva casi todo el peso, así que esa combinación prácticamente es ese modelo.</p>
-      </article>
-      <article>
-        <span class="findings__n">04</span>
-        <h3>Pocos datos, diferencias chicas</h3>
-        <p>Las exógenas empiezan en 2018 y hay entre 11 y 14 orígenes por horizonte. Diferencias pequeñas de RMSE no son concluyentes.</p>
-      </article>
-    </div>
-  </section>
+<article>
+<span class="findings__n">01</span>
+<h3>ETS es el mejor modelo individual, salvo a 1 trimestre con exógenas observadas</h3>
+<p>Con exógenas pronosticadas, ETS gana a todos los horizontes (RMSE 1.78 a 1 trimestre y 1.49 a 4). Con exógenas observadas, ARIMAX promedio lo supera a 1 trimestre (1.67 contra 1.78), pero a 4 trimestres sigue ganando ETS (1.49 contra 2.08).</p>
+</article>
+<article>
+<span class="findings__n">02</span>
+<h3>Las mejores combinaciones son casi un solo modelo</h3>
+<p>Las de BIC, AIC y AICc llegan a RMSE ≈ 1.97 a 1 trimestre, pero porque dan 92–98% del peso a ARIMAX promedio. Las de 1/RMSE y 1/MSE reparten más el peso y dan 2.06–2.10: no superan a ETS.</p>
+</article>
+<article>
+<span class="findings__n">03</span>
+<h3>La regresión es la más débil y los datos observados no la arreglan</h3>
+<p>Subestima de forma sistemática (ME positivo) y sus residuos están autocorrelacionados. Con exógenas observadas su error casi no baja a 1 trimestre y sube a 3 y 4. Lo que más pesa en ella es EMEC menudeo.</p>
+</article>
+<article>
+<span class="findings__n">04</span>
+<h3>Los intervalos son orientativos</h3>
+<p>El intervalo propio de ETS es muy ancho (cubre 100% en la validación); los de regresión y ARIMAX cubren entre 75% y 92%. Con 11 a 14 orígenes por horizonte, las diferencias pequeñas de RMSE y de cobertura no son concluyentes.</p>
+</article>
+</div>
+</section>
 
   <!-- METODOLOGÍA -->
   <section id="metodologia" class="card method">
     <div class="method__col method__col--wide">
       <h2>Metodología</h2>
-      <p>Todos los modelos trabajan sobre log(ITAEE) y se regresan a nivel. La regresión y el ARIMA usan EMEC mayoreo, EMEC menudeo y EMIM (promedio o último mes del trimestre) y una dummy para 2020T2. Las exógenas futuras se pronostican con suavización exponencial.</p>
+      <p>Todos los modelos trabajan sobre log(ITAEE) y se regresan a nivel. La regresión y el ARIMA usan EMEC mayoreo, EMEC menudeo y EMIM (promedio o último mes del trimestre) y una dummy para 2020T2. Las exógenas futuras se pronostican con suavización exponencial (escenario “pronosticadas”) o se usan sus valores observados donde INEGI ya los publicó (escenario “observadas”). Los intervalos al 95% son los del propio modelo; para las combinaciones y como alternativa se usa el RMSE de validación (t de Student, n−1 g.l.).</p>
     </div>
     <div class="method__col">
       <h3>Modelos</h3>
